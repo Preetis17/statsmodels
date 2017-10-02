@@ -7,6 +7,7 @@ License: Simplified-BSD
 
 from __future__ import division, absolute_import, print_function
 
+import gc
 import warnings
 import numpy as np
 import pandas as pd
@@ -24,10 +25,12 @@ def test_arma_lfilter():
     # Tests of an ARMA model simulation against scipy.signal.lfilter
     # Note: the first elements of the generated SARIMAX datasets are based on
     # the initial state, so we don't include them in the comparisons
+    gc.collect()
+    print('\nSetting seed')
     np.random.seed(10239)
     nobs = 100
     eps = np.random.normal(size=nobs)
-
+    print('Preparing...')
     # AR(1)
     mod = sarimax.SARIMAX([0], order=(1, 0, 0))
     actual = mod.simulate([0.5, 1.], nobs + 1, state_shocks=np.r_[eps, 0],
@@ -48,6 +51,7 @@ def test_arma_lfilter():
                           initial_state=np.zeros(mod.k_states))
     desired = lfilter([1, 0.2], [1, -0.5], eps)
     assert_allclose(actual[1:], desired)
+    gc.collect()
 
 
 def test_arma_direct():
@@ -55,11 +59,13 @@ def test_arma_direct():
     # This is useful for e.g. trend components
     # Note: the first elements of the generated SARIMAX datasets are based on
     # the initial state, so we don't include them in the comparisons
+    gc.collect()
+    print('\nSetting seed')
     np.random.seed(10239)
     nobs = 100
     eps = np.random.normal(size=nobs)
     exog = np.random.normal(size=nobs)
-
+    print('Preparing...')
     # AR(1)
     mod = sarimax.SARIMAX([0], order=(1, 0, 0))
     actual = mod.simulate([0.5, 1.], nobs + 1, state_shocks=np.r_[eps, 0],
@@ -148,17 +154,18 @@ def test_arma_direct():
                           0.2 * eps[i - 1] + eps[i])
     desired = desired - 0.5 * exog
     assert_allclose(actual[1:], desired)
+    gc.collect()
 
 
 def test_structural():
     # Clear warnings
-    structural.__warningregistry__ = {}
-
+    gc.collect()
+    print('\nSetting seed')
     np.random.seed(38947)
     nobs = 100
     eps = np.random.normal(size=nobs)
     exog = np.random.normal(size=nobs)
-
+    print('Preparing...')
     eps1 = np.zeros(nobs)
     eps2 = np.zeros(nobs)
     eps2[49] = 1
@@ -330,17 +337,18 @@ def test_structural():
         desired[i] += states[0]
         states = np.dot(T, states) + eps2[i]
     assert_allclose(actual, desired)
+    gc.collect()
 
 
 def test_varmax():
     # Clear warnings
-    varmax.__warningregistry__ = {}
-
+    gc.collect()
+    print('\nSetting seed')
     np.random.seed(371934)
     nobs = 100
     eps = np.random.normal(size=nobs)
     exog = np.random.normal(size=(nobs, 1))
-
+    print('Preparing...')
     eps1 = np.zeros(nobs)
     eps2 = np.zeros(nobs)
     eps2[49] = 1
@@ -348,8 +356,11 @@ def test_varmax():
     eps3[50:] = 1
 
     # VAR(2) - single series
+    print('Sertting up VARMAX')
     mod1 = varmax.VARMAX([[0]], order=(2, 0), trend='nc')
+    print('Sertting up SARIRMAX')
     mod2 = sarimax.SARIMAX([0], order=(2, 0, 0))
+    print('Done setup')
     actual = mod1.simulate([0.5, 0.2, 1], nobs, state_shocks=eps,
                            initial_state=np.zeros(mod1.k_states))
     desired = mod2.simulate([0.5, 0.2, 1], nobs, state_shocks=eps,
@@ -441,14 +452,17 @@ def test_varmax():
             np.random.normal(size=(nobs, 2)), order=(2, 2), trend='c',
             exog=exog)
     mod.simulate(mod.start_params, nobs)
+    gc.collect()
 
 
 def test_dynamic_factor():
+    gc.collect()
+    print('\nSeeding...')
     np.random.seed(93739)
     nobs = 100
     eps = np.random.normal(size=nobs)
     exog = np.random.normal(size=(nobs, 1))
-
+    print('Preparing...')
     eps1 = np.zeros(nobs)
     eps2 = np.zeros(nobs)
     eps2[49] = 1
@@ -486,3 +500,4 @@ def test_dynamic_factor():
                                        k_factors=2, factor_order=2, exog=exog,
                                        error_order=2, error_var=True)
     mod.simulate(mod.start_params, nobs)
+    gc.collect()

@@ -8,12 +8,11 @@ developers [1], which was in turn based on work done in pyzmq [2] and lxml [3].
 """
 
 import os
-from os.path import relpath, join as pjoin
-import sys
-import subprocess
 import re
-from distutils.version import StrictVersion, LooseVersion
-
+import subprocess
+import sys
+from distutils.version import LooseVersion
+from os.path import join as pjoin, relpath
 
 # temporarily redirect config directory to prevent matplotlib importing
 # testing that for writeable directory which results in sandbox error in
@@ -461,7 +460,9 @@ for name, data in ext_data.items():
     data.pop('name')
 
     filename = data.pop('filename', name)
-
+    data['extra_compile_args'] = ['-Zi', '/Od', '/DDEBUG']
+    data['extra_link_args'] = ['-debug']
+    data['undef_macros'] = ['NDEBUG']
     obj = Extension('%s.%s' % (destdir, filename), **data)
 
     extensions.append(obj)

@@ -902,14 +902,17 @@ class KalmanFilter(Representation):
         simulated_states : array
             An (nsimulations x k_states) array of simulated states.
         """
+        print('SSM Simulate 1')
         time_invariant = self.time_invariant
         # Check for valid number of simulations
+        print('SSM Simulate 2')
         if not time_invariant and nsimulations > self.nobs:
             raise ValueError('In a time-varying model, cannot create more'
                              ' simulations than there are observations.')
-
+        print('SSM Simulate 3')
         # Check / generate measurement shocks
         if measurement_shocks is not None:
+            print('SSM Simulate 4')
             measurement_shocks = np.array(measurement_shocks)
             if measurement_shocks.ndim == 0:
                 measurement_shocks = measurement_shocks[np.newaxis, np.newaxis]
@@ -920,12 +923,14 @@ class KalmanFilter(Representation):
                                  ' shocks. Required (%d, %d)'
                                  % (nsimulations, self.k_endog))
         elif self.shapes['obs_cov'][-1] == 1:
+            print('SSM Simulate 5')
             measurement_shocks = np.random.multivariate_normal(
                 mean=np.zeros(self.k_endog), cov=self['obs_cov'],
                 size=nsimulations)
-
+        print('SSM Simulate 6')
         # Check / generate state shocks
         if state_shocks is not None:
+            print('SSM Simulate 7')
             state_shocks = np.array(state_shocks)
             if state_shocks.ndim == 0:
                 state_shocks = state_shocks[np.newaxis, np.newaxis]
@@ -936,12 +941,14 @@ class KalmanFilter(Representation):
                                  ' Required (%d, %d).'
                                  % (nsimulations, self.k_posdef))
         elif self.shapes['state_cov'][-1] == 1:
+            print('SSM Simulate 8')
             state_shocks = np.random.multivariate_normal(
                 mean=np.zeros(self.k_posdef), cov=self['state_cov'],
                 size=nsimulations)
-
+        print('SSM Simulate 9')
         # Get the initial states
         if initial_state is not None:
+            print('SSM Simulate 10')
             initial_state = np.array(initial_state)
             if initial_state.ndim == 0:
                 initial_state = initial_state[np.newaxis]
@@ -950,9 +957,11 @@ class KalmanFilter(Representation):
                 raise ValueError('Invalid shape of provided initial state'
                                  ' vector. Required (%d, 1)' % self.k_states)
         elif self.initialization == 'known':
+            print('SSM Simulate 11')
             initial_state = np.random.multivariate_normal(
                 self._initial_state, self._initial_state_cov)
         elif self.initialization == 'stationary':
+            print('SSM Simulate 12')
             from scipy.linalg import solve_discrete_lyapunov
             # (I - T)^{-1} c = x => (I - T) x = c
             initial_state_mean = np.linalg.solve(
@@ -969,19 +978,22 @@ class KalmanFilter(Representation):
             initial_state = np.zeros(self.k_states)
         else:
             initial_state = np.zeros(self.k_states)
-
+        print('SSM Simulate 13')
         return self._simulate(nsimulations, measurement_shocks, state_shocks,
                               initial_state)
 
     def _simulate(self, nsimulations, measurement_shocks, state_shocks,
                   initial_state):
+        print('_Simulate 1')
         time_invariant = self.time_invariant
 
         # Holding variables for the simulations
         simulated_obs = np.zeros((nsimulations, self.k_endog),
                                  dtype=self.dtype)
+        print('_Simulate 2')
         simulated_states = np.zeros((nsimulations+1, self.k_states),
                                     dtype=self.dtype)
+        print('_Simulate 3')
         simulated_states[0] = initial_state
 
         # Perform iterations to create the new time series
@@ -990,41 +1002,46 @@ class KalmanFilter(Representation):
         state_intercept_t = 0
         transition_t = 0
         selection_t = 0
+        print('_Simulate 4')
         for t in range(nsimulations):
             # Get the current shocks (this accomodates time-varying matrices)
             if measurement_shocks is None:
+                print('_Simulate 5')
                 measurement_shock = np.random.multivariate_normal(
                     mean=np.zeros(self.k_endog), cov=self['obs_cov', :, :, t])
             else:
                 measurement_shock = measurement_shocks[t]
-
+            print('_Simulate 6')
             if state_shocks is None:
                 state_shock = np.random.multivariate_normal(
                     mean=np.zeros(self.k_posdef),
                     cov=self['state_cov', :, :, t])
             else:
                 state_shock = state_shocks[t]
-
+            print('_Simulate 7')
             # Get current-iteration matrices
             if not time_invariant:
+                print('_Simulate 8')
                 obs_intercept_t = 0 if self.obs_intercept.shape[-1] == 1 else t
                 design_t = 0 if self.design.shape[-1] == 1 else t
                 state_intercept_t = (
                     0 if self.state_intercept.shape[-1] == 1 else t)
                 transition_t = 0 if self.transition.shape[-1] == 1 else t
                 selection_t = 0 if self.selection.shape[-1] == 1 else t
-
+            print('_Simulate 9')
             obs_intercept = self['obs_intercept', :, obs_intercept_t]
             design = self['design', :, :, design_t]
             state_intercept = self['state_intercept', :, state_intercept_t]
             transition = self['transition', :, :, transition_t]
             selection = self['selection', :, :, selection_t]
-
+            print('_Simulate 10')
             # Iterate the measurement equation
+            print('_Simulate 11')
             simulated_obs[t] = (
                 obs_intercept + np.dot(design, simulated_states[t]) +
                 measurement_shock)
 
+            print('_Simulate 12')
             # Iterate the state equation
             simulated_states[t+1] = (
                 state_intercept + np.dot(transition, simulated_states[t]) +

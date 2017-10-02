@@ -33,4 +33,6 @@ build_script:
 
 test_script:
   # Remove xdist (-n auto) until warning reporting is working
-  - pytest statsmodels
+  - pytest statsmodels -s -v --skip-slow --skip-examples
+  
+

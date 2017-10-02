@@ -1428,8 +1428,9 @@ class MLEModel(tsbase.TimeSeriesModel):
         simulated_obs : array
             An (nsimulations x k_endog) array of simulated observations.
         """
+        print('Simulate 1')
         self.update(params)
-
+        print('Simulate 2')
         simulated_obs, simulated_states = self.ssm.simulate(
             nsimulations, measurement_shocks, state_shocks, initial_state)
 
