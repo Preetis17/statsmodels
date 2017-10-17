@@ -120,7 +120,7 @@ script:
   # Run tests
   # Remove xdist (-n 2) until warning reporting is working
   - echo pytest ${COVERAGE_OPTS} statsmodels --skip-examples
-  - pytest ${COVERAGE_OPTS} statsmodels --skip-examples
+  - pytest ${COVERAGE_OPTS} --skip-examples statsmodels/tsa/statespace statsmodels/tsa/kalmanf statsmodels/tsa/regime_switching statsmodels/nonparametric
 
 after_success:
   - if [ ${COVERAGE} = true ]; then coveralls --rcfile=${SRCDIR}/.travis_coveragerc; fi
